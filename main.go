@@ -11,20 +11,16 @@ import (
 
 type cmdLineBrowser struct {
 	application string
-	param1      string
-	param2      string
-	param3      string
+	params      []string
 	url         string
 }
 
 func renderPage(URL string, file bool) []byte {
 	chrome := cmdLineBrowser{
 		application: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-		param1:      "--headless",
-		param2:      "--disable-gpu",
-		param3:      "--dump-dom",
+		params:      []string{"--headless", "--disable-gpu", "--dump-dom"},
 		url:         URL}
-	cmd := exec.Command(chrome.application, chrome.param1, chrome.param2, chrome.param3, chrome.url)
+	cmd := exec.Command(chrome.application, append(chrome.params, chrome.url)...)
 	log.Printf("Running Chrome to render the page for %s ...", chrome.url)
 	out, err := cmd.Output()
 	if err != nil {
@@ -49,12 +45,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func testPages() {
-	renderPage("http://index.hu/", true)
-	renderPage("https://www.theguardian.com/uk", true)
+	pages := []string{"http://index.hu/", "https://www.theguardian.com/uk"}
+	for _, p := range pages {
+		renderPage(p, true)
+	}
 }
 
 func main() {
-	//testPages()
-	http.HandleFunc("/", handler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	testPages()
+	//http.HandleFunc("/", handler)
+	//log.Fatal(http.ListenAndServe(":8080", nil))
 }
